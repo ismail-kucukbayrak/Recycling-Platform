@@ -1,8 +1,4 @@
 # ♻️ Recycling Platform
-![Java](https://img.shields.io/badge/Java-Swing-orange)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
-![JDBC](https://img.shields.io/badge/JDBC-Connectivity-green)
-![Status](https://img.shields.io/badge/Status-Completed-brightgreen)
 
 A desktop application developed using **Java (Swing)** and **PostgreSQL** for managing recycling processes.  
 The system supports three different user roles: **Residents**, **Collector Companies**, and **Administrators**.
