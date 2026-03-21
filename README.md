@@ -1,4 +1,5 @@
 # ♻️ Recycling Platform
+
 ![Java](https://img.shields.io/badge/Java-Swing-orange)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
 ![JDBC](https://img.shields.io/badge/JDBC-Connectivity-green)
