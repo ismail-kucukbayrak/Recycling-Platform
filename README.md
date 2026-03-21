@@ -9,7 +9,7 @@ The system supports three different user roles: **Residents**, **Collector Compa
 
 ### 👤 Resident
 - Register and log in to the system
-- Add recyclable waste (carton, glass, electronic)
+- Add recyclable waste (paper, glass, electronic)
 - View personal waste reports
 
 ### 🚛 Collector Company
