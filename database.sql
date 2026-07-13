@@ -1,317 +1,317 @@
 ----------------------------------------------------
------------TABLOLAR---------------------------------
+-----------TABLES------------------------------------
 ----------------------------------------------------
 
---Yetkililer Tablosu
-CREATE TABLE yetkililer (
-    telefon BIGINT PRIMARY KEY,
-    sifre   VARCHAR(20) NOT NULL,
-    isim    VARCHAR(50) NOT NULL,
-    soyisim VARCHAR(50) NOT NULL
+--Admins Table
+CREATE TABLE admins (
+    phone    BIGINT PRIMARY KEY,
+    password VARCHAR(20) NOT NULL,
+    name     VARCHAR(50) NOT NULL,
+    surname  VARCHAR(50) NOT NULL
 );
 
 
---Mahalle Sakinleri Tablosu
-CREATE TABLE mahalle_sakinleri (
-    telefon BIGINT PRIMARY KEY,
-    sifre   VARCHAR(20) NOT NULL,
-    isim    VARCHAR(50) NOT NULL,
-    soyisim VARCHAR(50) NOT NULL,
-    "karton(kg)" INTEGER DEFAULT 0,
-    "cam(kg)" INTEGER DEFAULT 0,
-    "elektronik(kg)" INTEGER DEFAULT 0
+--Neighborhood Residents Table
+CREATE TABLE neighborhood_residents (
+    phone    BIGINT PRIMARY KEY,
+    password VARCHAR(20) NOT NULL,
+    name     VARCHAR(50) NOT NULL,
+    surname  VARCHAR(50) NOT NULL,
+    "plastic(kg)" INTEGER DEFAULT 0,
+    "glass(kg)" INTEGER DEFAULT 0,
+    "electronic(kg)" INTEGER DEFAULT 0
 );
 
 
---Toplayıcı Firmalar Tablosu
-CREATE TABLE toplayici_firmalar (
-    telefon BIGINT PRIMARY KEY,
-    sifre   VARCHAR(20) NOT NULL,
-    isim    VARCHAR(50) NOT NULL
+--Collector Companies Table
+CREATE TABLE collector_companies (
+    phone    BIGINT PRIMARY KEY,
+    password VARCHAR(20) NOT NULL,
+    name     VARCHAR(50) NOT NULL
 );
 
 
---Depodaki Atık Tablosu
-CREATE TABLE depo (
+--Warehouse Waste Table
+CREATE TABLE warehouse (
     id SERIAL PRIMARY KEY,
-    atik_ismi VARCHAR(50) NOT NULL,
-    "miktar(kg)" INTEGER DEFAULT 0 CHECK ("miktar(kg)" >= 0)
+    waste_name VARCHAR(50) NOT NULL,
+    "amount(kg)" INTEGER DEFAULT 0 CHECK ("amount(kg)" >= 0)
 );
 
 
---SEQUENCE: Randevular id
-CREATE SEQUENCE randevu_id_seq START 1 INCREMENT 1;
+--SEQUENCE: Appointments id
+CREATE SEQUENCE appointment_id_seq START 1 INCREMENT 1;
 
---Randevu Tablosu
-CREATE TABLE randevular (
-    id INTEGER PRIMARY KEY DEFAULT nextval('randevu_id_seq'),
-    telefon BIGINT,
-    "firma ismi" VARCHAR(50),
-    atik_id INTEGER,
-    "atık ismi" VARCHAR(50),
-    "miktar(kg)" INTEGER NOT NULL,
-    zaman TIMESTAMP NOT NULL,
+--Appointments Table
+CREATE TABLE appointments (
+    id INTEGER PRIMARY KEY DEFAULT nextval('appointment_id_seq'),
+    phone BIGINT,
+    "company_name" VARCHAR(50),
+    waste_id INTEGER,
+    "waste_name" VARCHAR(50),
+    "amount(kg)" INTEGER NOT NULL,
+    time TIMESTAMP NOT NULL,
 
-    FOREIGN KEY (telefon) REFERENCES toplayici_firmalar(telefon) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (phone) REFERENCES collector_companies(phone) ON UPDATE CASCADE ON DELETE CASCADE,
 
-    FOREIGN KEY (atik_id) REFERENCES depo(id) ON UPDATE CASCADE ON DELETE RESTRICT
+    FOREIGN KEY (waste_id) REFERENCES warehouse(id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 ----------------------------------------------------
------------İŞLEMLER---------------------------------
+-----------OPERATIONS--------------------------------
 ----------------------------------------------------
 
---Depodaki ürün Tanımları
-INSERT INTO depo (atik_ismi, "miktar(kg)") VALUES
-('karton', 0),
-('cam', 0),
-('elektronik', 0);
+--Warehouse Product Definitions
+INSERT INTO warehouse (waste_name, "amount(kg)") VALUES
+('plastic', 0),
+('glass', 0),
+('electronic', 0);
 
 
---FUNCTION: MAHALLE SAKİNİ GİRİŞ
-CREATE OR REPLACE FUNCTION mahalle_sakini_giris(p_telefon BIGINT, p_sifre VARCHAR)
+--FUNCTION: NEIGHBORHOOD RESIDENT LOGIN
+CREATE OR REPLACE FUNCTION neighborhood_resident_login(p_phone BIGINT, p_password VARCHAR)
 RETURNS BOOLEAN AS $$
 BEGIN
-    RETURN EXISTS (SELECT 1 FROM mahalle_sakinleri WHERE telefon = p_telefon AND sifre = p_sifre);
+    RETURN EXISTS (SELECT 1 FROM neighborhood_residents WHERE phone = p_phone AND password = p_password);
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: TOPLAYICI FİRMA GİRİŞ
-CREATE OR REPLACE FUNCTION toplayici_firma_giris(p_telefon BIGINT, p_sifre VARCHAR)
+--FUNCTION: COLLECTOR COMPANY LOGIN
+CREATE OR REPLACE FUNCTION collector_company_login(p_phone BIGINT, p_password VARCHAR)
 RETURNS BOOLEAN AS $$
 BEGIN
-    RETURN EXISTS (SELECT 1 FROM toplayici_firmalar WHERE telefon = p_telefon AND sifre = p_sifre);
+    RETURN EXISTS (SELECT 1 FROM collector_companies WHERE phone = p_phone AND password = p_password);
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: YETKİLİ (ADMIN) GİRİŞ
-CREATE OR REPLACE FUNCTION yetkili_giris(p_telefon BIGINT, p_sifre VARCHAR)
+--FUNCTION: ADMIN LOGIN
+CREATE OR REPLACE FUNCTION admin_login(p_phone BIGINT, p_password VARCHAR)
 RETURNS BOOLEAN AS $$
 BEGIN
-    RETURN EXISTS (SELECT 1 FROM yetkililer WHERE telefon = p_telefon AND sifre = p_sifre);
+    RETURN EXISTS (SELECT 1 FROM admins WHERE phone = p_phone AND password = p_password);
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: Mahalle Sakini Kayıt
-CREATE OR REPLACE FUNCTION mahalle_sakini_kayit_ol(p_telefon BIGINT, p_sifre VARCHAR, p_isim VARCHAR, p_soyisim VARCHAR)
+--FUNCTION: Neighborhood Resident Registration
+CREATE OR REPLACE FUNCTION register_neighborhood_resident(p_phone BIGINT, p_password VARCHAR, p_name VARCHAR, p_surname VARCHAR)
 RETURNS VOID AS $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM mahalle_sakinleri WHERE telefon = p_telefon) THEN
-        RAISE EXCEPTION 'Bu telefon numarası ile kayıt zaten mevcut.';
+    IF EXISTS (SELECT 1 FROM neighborhood_residents WHERE phone = p_phone) THEN
+        RAISE EXCEPTION 'A registration with this phone number already exists.';
     END IF;
 
-    INSERT INTO mahalle_sakinleri (telefon, sifre, isim, soyisim, "karton(kg)", "cam(kg)", "elektronik(kg)")
-    VALUES (p_telefon, p_sifre, p_isim, p_soyisim, 0, 0, 0);
+    INSERT INTO neighborhood_residents (phone, password, name, surname, "plastic(kg)", "glass(kg)", "electronic(kg)")
+    VALUES (p_phone, p_password, p_name, p_surname, 0, 0, 0);
 
-    RAISE NOTICE 'Mahalle sakini başarıyla kaydedildi.';
+    RAISE NOTICE 'Neighborhood resident registered successfully.';
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: Toplayıcı Firma Kayıt
-CREATE OR REPLACE FUNCTION toplayici_firma_kayit_ol(p_telefon BIGINT, p_sifre VARCHAR, p_isim VARCHAR)
+--FUNCTION: Collector Company Registration
+CREATE OR REPLACE FUNCTION register_collector_company(p_phone BIGINT, p_password VARCHAR, p_name VARCHAR)
 RETURNS VOID AS $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM toplayici_firmalar WHERE telefon = p_telefon) THEN
-        RAISE EXCEPTION 'Bu telefon numarası ile kayıt zaten mevcut.';
+    IF EXISTS (SELECT 1 FROM collector_companies WHERE phone = p_phone) THEN
+        RAISE EXCEPTION 'A registration with this phone number already exists.';
     END IF;
 
-    INSERT INTO toplayici_firmalar (telefon, sifre, isim)
-    VALUES (p_telefon, p_sifre, p_isim);
+    INSERT INTO collector_companies (phone, password, name)
+    VALUES (p_phone, p_password, p_name);
 
-    RAISE NOTICE 'Toplayıcı firma başarıyla kaydedildi.';
+    RAISE NOTICE 'Collector company registered successfully.';
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: Mahalle Sakini Atık Ekleme
-CREATE OR REPLACE FUNCTION mahalle_sakini_atik_ekle(p_telefon BIGINT, p_atik_turu VARCHAR, p_miktar INTEGER)
+--FUNCTION: Neighborhood Resident Add Waste
+CREATE OR REPLACE FUNCTION add_waste_for_neighborhood_resident(p_phone BIGINT, p_waste_type VARCHAR, p_amount INTEGER)
 RETURNS VOID AS $$
 BEGIN
-    IF p_atik_turu = 'karton' THEN
-        UPDATE mahalle_sakinleri SET "karton(kg)" = "karton(kg)" + p_miktar WHERE telefon = p_telefon;
+    IF p_waste_type = 'plastic' THEN
+        UPDATE neighborhood_residents SET "plastic(kg)" = "plastic(kg)" + p_amount WHERE phone = p_phone;
 
-    ELSIF p_atik_turu = 'cam' THEN
-        UPDATE mahalle_sakinleri SET "cam(kg)" = "cam(kg)" + p_miktar WHERE telefon = p_telefon;
+    ELSIF p_waste_type = 'glass' THEN
+        UPDATE neighborhood_residents SET "glass(kg)" = "glass(kg)" + p_amount WHERE phone = p_phone;
 
-    ELSIF p_atik_turu = 'elektronik' THEN
-        UPDATE mahalle_sakinleri SET "elektronik(kg)" = "elektronik(kg)" + p_miktar WHERE telefon = p_telefon;
+    ELSIF p_waste_type = 'electronic' THEN
+        UPDATE neighborhood_residents SET "electronic(kg)" = "electronic(kg)" + p_amount WHERE phone = p_phone;
     END IF;
 
-    RAISE NOTICE 'Atık eklendi.';
+    RAISE NOTICE 'Waste added.';
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: Mahalle Sakini Raporu
-CREATE OR REPLACE FUNCTION mahalle_sakini_raporu(p_telefon BIGINT)
-RETURNS TABLE (urun VARCHAR, miktar INTEGER) AS $$
+--FUNCTION: Neighborhood Resident Report
+CREATE OR REPLACE FUNCTION neighborhood_resident_report(p_phone BIGINT)
+RETURNS TABLE (product VARCHAR, amount INTEGER) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 'Karton'::VARCHAR, "karton(kg)" FROM mahalle_sakinleri WHERE telefon = p_telefon
+    SELECT 'Plastic'::VARCHAR, "plastic(kg)" FROM neighborhood_residents WHERE phone = p_phone
     UNION ALL
-    SELECT 'Cam'::VARCHAR, "cam(kg)" FROM mahalle_sakinleri WHERE telefon = p_telefon
+    SELECT 'Glass'::VARCHAR, "glass(kg)" FROM neighborhood_residents WHERE phone = p_phone
     UNION ALL
-    SELECT 'Elektronik'::VARCHAR, "elektronik(kg)" FROM mahalle_sakinleri WHERE telefon = p_telefon;
+    SELECT 'Electronic'::VARCHAR, "electronic(kg)" FROM neighborhood_residents WHERE phone = p_phone;
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: Randevu Oluştur
-CREATE OR REPLACE FUNCTION randevu_olustur( p_telefon BIGINT, p_atik_id INTEGER, p_miktar INTEGER, p_zaman TIMESTAMP )
+--FUNCTION: Create Appointment
+CREATE OR REPLACE FUNCTION create_appointment( p_phone BIGINT, p_waste_id INTEGER, p_amount INTEGER, p_time TIMESTAMP )
 RETURNS VOID AS $$
 DECLARE
-    depo_miktar INTEGER;
-    p_firma_ismi VARCHAR(50);
-    p_atik_ismi VARCHAR(50);
+    warehouse_amount INTEGER;
+    p_company_name VARCHAR(50);
+    p_waste_name VARCHAR(50);
 BEGIN
-    SELECT "miktar(kg)" INTO depo_miktar FROM depo WHERE id = p_atik_id;
-    SELECT isim INTO p_firma_ismi FROM toplayici_firmalar WHERE telefon = p_telefon;
-    SELECT atik_ismi INTO p_atik_ismi FROM depo WHERE id = p_atik_id;
+    SELECT "amount(kg)" INTO warehouse_amount FROM warehouse WHERE id = p_waste_id;
+    SELECT name INTO p_company_name FROM collector_companies WHERE phone = p_phone;
+    SELECT waste_name INTO p_waste_name FROM warehouse WHERE id = p_waste_id;
 
-    IF depo_miktar < p_miktar THEN
-        RAISE EXCEPTION 'Depoda yeterli miktar yok. Mevcut: %kg, İstenen: %kg', depo_miktar, p_miktar;
+    IF warehouse_amount < p_amount THEN
+        RAISE EXCEPTION 'Not enough amount in the warehouse. Available: %kg, Requested: %kg', warehouse_amount, p_amount;
     END IF;
 
-    INSERT INTO randevular (telefon,"firma ismi", atik_id, "atık ismi", "miktar(kg)", zaman)
-    VALUES (p_telefon, p_firma_ismi, p_atik_id, p_atik_ismi, p_miktar, p_zaman);
+    INSERT INTO appointments (phone,"company_name", waste_id, "waste_name", "amount(kg)", time)
+    VALUES (p_phone, p_company_name, p_waste_id, p_waste_name, p_amount, p_time);
 
-    RAISE NOTICE 'Randevu başarıyla oluşturuldu.';
+    RAISE NOTICE 'Appointment created successfully.';
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: Deponun Mevcut Durumu
-CREATE OR REPLACE FUNCTION depo_kayitlarini_getir()
-RETURNS TABLE (atik_id INTEGER, atik_ismi VARCHAR, "miktar(kg)" INTEGER) AS $$
+--FUNCTION: Current Warehouse Status
+CREATE OR REPLACE FUNCTION get_warehouse_records()
+RETURNS TABLE (waste_id INTEGER, waste_name VARCHAR, "amount(kg)" INTEGER) AS $$
 DECLARE
-    depo_cursor CURSOR FOR SELECT d.id, d.atik_ismi, d."miktar(kg)" FROM depo d ORDER BY d.id;
-    depo_rec RECORD;
+    warehouse_cursor CURSOR FOR SELECT w.id, w.waste_name, w."amount(kg)" FROM warehouse w ORDER BY w.id;
+    warehouse_rec RECORD;
 BEGIN
-    OPEN depo_cursor;
+    OPEN warehouse_cursor;
 
     LOOP
-        FETCH depo_cursor INTO depo_rec;
+        FETCH warehouse_cursor INTO warehouse_rec;
         EXIT WHEN NOT FOUND;
 
-        atik_id       := depo_rec.id;
-        atik_ismi     := depo_rec.atik_ismi;
-        "miktar(kg)"  := depo_rec."miktar(kg)";
+        waste_id      := warehouse_rec.id;
+        waste_name    := warehouse_rec.waste_name;
+        "amount(kg)"  := warehouse_rec."amount(kg)";
 
         RETURN NEXT;
     END LOOP;
 
-    CLOSE depo_cursor;
+    CLOSE warehouse_cursor;
 END;
 $$ LANGUAGE plpgsql;
 
 
---VİEW: Bugün ve Sonrası Randevular
-CREATE VIEW bugunun_randevulari AS
-SELECT * 
-FROM randevular 
-WHERE date(zaman) >= CURRENT_DATE 
-ORDER BY zaman;
+--VIEW: Today and Future Appointments
+CREATE VIEW todays_appointments AS
+SELECT *
+FROM appointments
+WHERE date(time) >= CURRENT_DATE
+ORDER BY time;
 
 
---FUNCTION: Aylık Toplam Atık Kaydı
-CREATE OR REPLACE FUNCTION aylik_toplam_atik_raporu()
-RETURNS TABLE ("toplam_karton(kg)" BIGINT, "toplam_cam(kg)" BIGINT, "toplam_elektronik(kg)" BIGINT) AS $$
+--FUNCTION: Monthly Total Waste Report
+CREATE OR REPLACE FUNCTION monthly_total_waste_report()
+RETURNS TABLE ("total_plastic(kg)" BIGINT, "total_glass(kg)" BIGINT, "total_electronic(kg)" BIGINT) AS $$
 BEGIN
     RETURN QUERY
-    SELECT SUM("karton(kg)"), SUM("cam(kg)"), SUM("elektronik(kg)")
-    FROM mahalle_sakinleri
-    HAVING SUM("karton(kg)") >= 0 AND SUM("cam(kg)") >= 0 AND SUM("elektronik(kg)") >= 0;
+    SELECT SUM("plastic(kg)"), SUM("glass(kg)"), SUM("electronic(kg)")
+    FROM neighborhood_residents
+    HAVING SUM("plastic(kg)") >= 0 AND SUM("glass(kg)") >= 0 AND SUM("electronic(kg)") >= 0;
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: Bu Ay Atık Ekleyenler
-CREATE OR REPLACE FUNCTION bu_ay_atik_ekleyen_mahalle_sakinleri()
-RETURNS TABLE (telefon BIGINT, isim VARCHAR, soyisim VARCHAR) AS $$  
+--FUNCTION: Residents Who Added Waste This Month
+CREATE OR REPLACE FUNCTION neighborhood_residents_who_added_waste_this_month()
+RETURNS TABLE (phone BIGINT, name VARCHAR, surname VARCHAR) AS $$
 BEGIN
     RETURN QUERY
 
-    SELECT m.telefon, m.isim, m.soyisim FROM mahalle_sakinleri m WHERE m."karton(kg)" > 0
+    SELECT r.phone, r.name, r.surname FROM neighborhood_residents r WHERE r."plastic(kg)" > 0
 
     UNION
 
-    SELECT m.telefon, m.isim, m.soyisim FROM mahalle_sakinleri m WHERE m."cam(kg)" > 0
+    SELECT r.phone, r.name, r.surname FROM neighborhood_residents r WHERE r."glass(kg)" > 0
 
     UNION
 
-    SELECT m.telefon, m.isim, m.soyisim FROM mahalle_sakinleri m WHERE m."elektronik(kg)" > 0;
+    SELECT r.phone, r.name, r.surname FROM neighborhood_residents r WHERE r."electronic(kg)" > 0;
 
 END;
 $$ LANGUAGE plpgsql;
 
 
---INDEX: Mahalle Sakini İsmi
-CREATE INDEX idx_mahalle_sakinleri_isim
-ON mahalle_sakinleri (isim);
+--INDEX: Neighborhood Resident Name
+CREATE INDEX idx_neighborhood_residents_name
+ON neighborhood_residents (name);
 
 
---FUNCTION: Index Kullanarak Mahalle Sakini Bulma
-CREATE OR REPLACE FUNCTION mahalle_sakini_isme_gore_getir (p_isim VARCHAR)
-RETURNS TABLE (telefon BIGINT, isim VARCHAR, soyisim VARCHAR) AS $$
+--FUNCTION: Find Neighborhood Resident Using Index
+CREATE OR REPLACE FUNCTION get_neighborhood_resident_by_name (p_name VARCHAR)
+RETURNS TABLE (phone BIGINT, name VARCHAR, surname VARCHAR) AS $$
 BEGIN
     RETURN QUERY
-    SELECT m.telefon, m.isim, m.soyisim FROM mahalle_sakinleri m WHERE m.isim = p_isim;
+    SELECT r.phone, r.name, r.surname FROM neighborhood_residents r WHERE r.name = p_name;
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: Aylık Atık Kaydı Sıfırlama
-CREATE OR REPLACE FUNCTION aylik_atiklari_sifirla()
+--FUNCTION: Reset Monthly Waste Records
+CREATE OR REPLACE FUNCTION reset_monthly_waste()
 RETURNS VOID AS $$
 BEGIN
-    UPDATE mahalle_sakinleri
+    UPDATE neighborhood_residents
     SET
-        "karton(kg)" = 0,
-        "cam(kg)" = 0,
-        "elektronik(kg)" = 0;
+        "plastic(kg)" = 0,
+        "glass(kg)" = 0,
+        "electronic(kg)" = 0;
 
-    RAISE NOTICE 'Mahalle sakinlerinin aylık atık miktarları sıfırlandı.';
+    RAISE NOTICE 'Monthly waste amounts for neighborhood residents have been reset.';
 END;
 $$ LANGUAGE plpgsql;
 
 
---FUNCTION: Mahalle Sakini Sil
-CREATE OR REPLACE FUNCTION mahalle_sakini_sil (p_telefon BIGINT)
+--FUNCTION: Delete Neighborhood Resident
+CREATE OR REPLACE FUNCTION delete_neighborhood_resident (p_phone BIGINT)
 RETURNS VOID AS $$
 BEGIN
-    DELETE FROM mahalle_sakinleri WHERE telefon = p_telefon;
+    DELETE FROM neighborhood_residents WHERE phone = p_phone;
 
-    RAISE NOTICE 'Mahalle sakini sistemden silindi.';
+    RAISE NOTICE 'Neighborhood resident removed from the system.';
 END;
 $$ LANGUAGE plpgsql;
 
 
---TRIGGER FUNCTION: Atık Eklenirse Depoyu GÜncelle
-CREATE OR REPLACE FUNCTION trg_atiklari_depoya_ekle()
+--TRIGGER FUNCTION: Update Warehouse When Waste Is Added
+CREATE OR REPLACE FUNCTION trg_add_waste_to_warehouse()
 RETURNS trigger AS $$
 DECLARE
-    fark_karton INTEGER;
-    fark_cam INTEGER;
-    fark_elektronik INTEGER;
+    diff_plastic INTEGER;
+    diff_glass INTEGER;
+    diff_electronic INTEGER;
 BEGIN
 
-    fark_karton := NEW."karton(kg)" - OLD."karton(kg)";
-    IF fark_karton > 0 THEN
-        UPDATE depo SET "miktar(kg)" = "miktar(kg)" + fark_karton WHERE atik_ismi = 'karton';
+    diff_plastic := NEW."plastic(kg)" - OLD."plastic(kg)";
+    IF diff_plastic > 0 THEN
+        UPDATE warehouse SET "amount(kg)" = "amount(kg)" + diff_plastic WHERE waste_name = 'plastic';
     END IF;
 
-    fark_cam := NEW."cam(kg)" - OLD."cam(kg)";
-    IF fark_cam > 0 THEN
-        UPDATE depo SET "miktar(kg)" = "miktar(kg)" + fark_cam WHERE atik_ismi = 'cam';
+    diff_glass := NEW."glass(kg)" - OLD."glass(kg)";
+    IF diff_glass > 0 THEN
+        UPDATE warehouse SET "amount(kg)" = "amount(kg)" + diff_glass WHERE waste_name = 'glass';
     END IF;
 
-    fark_elektronik := NEW."elektronik(kg)" - OLD."elektronik(kg)";
-    IF fark_elektronik > 0 THEN
-        UPDATE depo SET "miktar(kg)" = "miktar(kg)" + fark_elektronik WHERE atik_ismi = 'elektronik';
+    diff_electronic := NEW."electronic(kg)" - OLD."electronic(kg)";
+    IF diff_electronic > 0 THEN
+        UPDATE warehouse SET "amount(kg)" = "amount(kg)" + diff_electronic WHERE waste_name = 'electronic';
     END IF;
 
     RETURN NEW;
@@ -319,29 +319,29 @@ END;
 $$ LANGUAGE plpgsql;
 
 --TRIGGER
-CREATE TRIGGER mahalle_sakini_atik_update
-AFTER UPDATE OF "karton(kg)", "cam(kg)", "elektronik(kg)"
-ON mahalle_sakinleri
+CREATE TRIGGER neighborhood_resident_waste_update
+AFTER UPDATE OF "plastic(kg)", "glass(kg)", "electronic(kg)"
+ON neighborhood_residents
 FOR EACH ROW
-EXECUTE FUNCTION trg_atiklari_depoya_ekle();
+EXECUTE FUNCTION trg_add_waste_to_warehouse();
 
 
---TRIGGER FUNCTON: Atık Çıkarılırsa Depoyu GÜncelle
-CREATE OR REPLACE FUNCTION trg_randevu_depoyu_guncelle()
+--TRIGGER FUNCTION: Update Warehouse When Waste Is Removed
+CREATE OR REPLACE FUNCTION trg_update_warehouse_on_appointment()
 RETURNS trigger AS $$
 BEGIN
-    UPDATE depo SET "miktar(kg)" = "miktar(kg)" - NEW."miktar(kg)" WHERE id = NEW.atik_id;
+    UPDATE warehouse SET "amount(kg)" = "amount(kg)" - NEW."amount(kg)" WHERE id = NEW.waste_id;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 --TRIGGER
-CREATE TRIGGER randevu_insert_depo_update
-AFTER INSERT ON randevular
+CREATE TRIGGER appointment_insert_warehouse_update
+AFTER INSERT ON appointments
 FOR EACH ROW
-EXECUTE FUNCTION trg_randevu_depoyu_guncelle();
+EXECUTE FUNCTION trg_update_warehouse_on_appointment();
 
 
---Yetkili Tanımları
-INSERT INTO yetkililer VALUES (0,'0','admin','admin')
+--Admin Definitions
+INSERT INTO admins VALUES (0,'0','admin','admin')
