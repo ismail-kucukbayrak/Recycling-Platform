@@ -52,6 +52,10 @@ A resident registers with a phone number, name, surname, and password, then logs
 
 ![Add waste](images/resident-add-waste.png)
 
+That trigger is what keeps the `warehouse` table in sync — every kg a resident logs is added to the matching waste type's stock:
+
+![Warehouse table](images/db-warehouse-table.png)
+
 **My Report** — a read-only table showing the resident's total plastic, glass, and electronic contributions in kg, backed by `neighborhood_resident_report`.
 
 ![My report](images/resident-report.png)
@@ -71,6 +75,10 @@ After login, the collector lands on a single-button menu (no screenshot) with **
 **Create Appointment** combines two things: a live view of warehouse stock (waste ID, type, and available kg) and a form to book a pickup — choose a waste type, an amount, and a date. Submitting calls `create_appointment`, which validates that enough stock is available before creating the appointment; a successful booking reduces the warehouse total via a database trigger.
 
 ![Create appointment](images/collector-create-appointment.png)
+
+Booking an appointment inserts a new row into the `appointments` table and, via another trigger, reduces the booked amount from the warehouse:
+
+![Appointments table](images/db-appointments-table.png)
 
 ---
 
@@ -124,7 +132,7 @@ All business logic — login checks, registration, waste totals, appointment cre
 - Waste & reporting: `add_waste_for_neighborhood_resident`, `neighborhood_resident_report`, `monthly_total_waste_report`, `neighborhood_residents_who_added_waste_this_month`, `get_neighborhood_resident_by_name`, `delete_neighborhood_resident`, `reset_monthly_waste`
 - Appointments & warehouse: `create_appointment`, `get_warehouse_records`, `todays_appointments` (view), plus triggers that update warehouse stock whenever waste is added or an appointment is booked
 
-Full definitions are in [`database.sql`](database.sql).
+Full definitions are in [`database.sql`](database.sql). See the `warehouse` and `appointments` table screenshots in the User Interface section above for how these tables look after the corresponding actions.
 
 ---
 
