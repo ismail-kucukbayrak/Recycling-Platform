@@ -4,10 +4,8 @@
 
 --Admins Table
 CREATE TABLE admins (
-    phone    BIGINT PRIMARY KEY,
-    password VARCHAR(20) NOT NULL,
-    name     VARCHAR(50) NOT NULL,
-    surname  VARCHAR(50) NOT NULL
+    username VARCHAR(20) PRIMARY KEY,
+    password VARCHAR(20) NOT NULL
 );
 
 
@@ -87,10 +85,10 @@ $$ LANGUAGE plpgsql;
 
 
 --FUNCTION: ADMIN LOGIN
-CREATE OR REPLACE FUNCTION admin_login(p_phone BIGINT, p_password VARCHAR)
+CREATE OR REPLACE FUNCTION admin_login(p_username VARCHAR, p_password VARCHAR)
 RETURNS BOOLEAN AS $$
 BEGIN
-    RETURN EXISTS (SELECT 1 FROM admins WHERE phone = p_phone AND password = p_password);
+    RETURN EXISTS (SELECT 1 FROM admins WHERE username = p_username AND password = p_password);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -344,4 +342,4 @@ EXECUTE FUNCTION trg_update_warehouse_on_appointment();
 
 
 --Admin Definitions
-INSERT INTO admins VALUES (0,'0','admin','admin')
+INSERT INTO admins VALUES ('admin','admin');
